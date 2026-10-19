@@ -58,7 +58,7 @@ function RoomPage() {
 
 function Prefs({ room, update, next }: { room: Room; update: (r: Room) => void; next: () => void }) {
   const [copied, setCopied] = useState(false);
-  const blank = { name: "", budget: 75000, area: AREAS[0], time: TIMES[1], cats: [] as string[] };
+  const blank = { name: "", budget: 75000, area: AREAS[0]!, time: TIMES[1]!, cats: [] as string[] };
   const [f, setF] = useState(blank);
   const link = typeof window !== "undefined" ? window.location.href : "";
 
@@ -164,7 +164,7 @@ function Vote({ room, update }: { room: Room; update: (r: Room) => void }) {
             );
           })}
         </div>
-        <button disabled={!total} className="kz-btn mt-5 disabled:opacity-40" onClick={() => update({ ...room, decided: top.id })}>Kunci keputusan 🔒</button>
+        <button disabled={!total} className="kz-btn mt-5 disabled:opacity-40" onClick={() => update({ ...room, decided: top?.id })}>Kunci keputusan 🔒</button>
       </div>
     </div>
   );
