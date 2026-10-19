@@ -1,5 +1,5 @@
 export type Member = { id: string; name: string; budget: number; area: string; time: string; cats: string[] };
-export type Room = { id: string; title: string; date: string; members: Member[]; votes: Record<string, string>; decided?: string };
+export type Room = { id: string; title: string; date: string; members: Member[]; votes: Record<string, string>; decided?: string | undefined };
 export type Place = { id: string; name: string; cat: string; area: string; price: number; times: string[]; emoji: string; tag: string };
 
 export const AREAS = ["Jakarta Selatan", "Jakarta Pusat", "Jakarta Barat", "Tangerang Selatan", "Depok", "Bandung"];
