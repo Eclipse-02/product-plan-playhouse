@@ -10,11 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MetrikRouteImport } from './routes/metrik'
+import { Route as TempatRouteImport } from './routes/tempat'
 import { Route as RoomIdRouteImport } from './routes/room.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MetrikRoute = MetrikRouteImport.update({
+  id: '/metrik',
+  path: '/metrik',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TempatRoute = TempatRouteImport.update({
+  id: '/tempat',
+  path: '/tempat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RoomIdRoute = RoomIdRouteImport.update({
@@ -25,27 +37,35 @@ const RoomIdRoute = RoomIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/metrik': typeof MetrikRoute
+  '/tempat': typeof TempatRoute
   '/room/$id': typeof RoomIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/metrik': typeof MetrikRoute
+  '/tempat': typeof TempatRoute
   '/room/$id': typeof RoomIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/metrik': typeof MetrikRoute
+  '/tempat': typeof TempatRoute
   '/room/$id': typeof RoomIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/room/$id'
+  fullPaths: '/' | '/metrik' | '/tempat' | '/room/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/room/$id'
-  id: '__root__' | '/' | '/room/$id'
+  to: '/' | '/metrik' | '/tempat' | '/room/$id'
+  id: '__root__' | '/' | '/metrik' | '/tempat' | '/room/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MetrikRoute: typeof MetrikRoute
+  TempatRoute: typeof TempatRoute
   RoomIdRoute: typeof RoomIdRoute
 }
 
@@ -56,6 +76,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metrik': {
+      id: '/metrik'
+      path: '/metrik'
+      fullPath: '/metrik'
+      preLoaderRoute: typeof MetrikRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tempat': {
+      id: '/tempat'
+      path: '/tempat'
+      fullPath: '/tempat'
+      preLoaderRoute: typeof TempatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/room/$id': {
@@ -70,6 +104,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MetrikRoute: MetrikRoute,
+  TempatRoute: TempatRoute,
   RoomIdRoute: RoomIdRoute,
 }
 export const routeTree = rootRouteImport
