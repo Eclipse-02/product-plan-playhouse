@@ -72,12 +72,12 @@
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.64 0.19 40);
+  --primary: oklch(0.55 0.18 40);
   --primary-foreground: oklch(0.99 0.01 85);
   --secondary: oklch(0.9 0.08 150);
   --secondary-foreground: oklch(0.208 0.042 265.755);
   --muted: oklch(0.92 0.02 85);
-  --muted-foreground: oklch(0.554 0.046 257.417);
+  --muted-foreground: oklch(0.42 0.04 160);
   --accent: oklch(0.968 0.007 247.896);
   --accent-foreground: oklch(0.208 0.042 265.755);
   --destructive: oklch(0.577 0.245 27.325);
@@ -147,7 +147,7 @@
 }
 
 @layer components {
-  .kz-input { @apply mt-1 w-full rounded-xl border-2 border-border bg-background px-3 py-2 outline-none focus:border-primary; }
+  .kz-input { @apply placeholder:text-muted-foreground mt-1 w-full rounded-xl border-2 border-border bg-background px-3 py-2 outline-none focus:border-primary; }
   .kz-btn { @apply rounded-xl border-2 border-foreground bg-primary px-5 py-2.5 font-semibold text-primary-foreground shadow-[3px_3px_0_var(--foreground)] transition active:translate-x-0.5 active:translate-y-0.5 active:shadow-none; }
   .kz-btn-inverse { @apply rounded-xl border-2 border-foreground bg-card px-5 py-2.5 font-semibold text-foreground; }
   .kz-card { @apply rounded-2xl border-2 border-border bg-card p-5; }
