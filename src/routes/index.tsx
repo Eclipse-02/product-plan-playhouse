@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { createRoom, fmtDate, track } from "@/lib/kemana";
+import { AccountControl } from "@/components/account-control";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -43,6 +44,7 @@ function Index() {
           <nav className="flex gap-4 text-sm font-semibold">
             <Link to="/tempat" className="underline-offset-4 hover:underline">Data tempat</Link>
             <Link to="/metrik" className="underline-offset-4 hover:underline">Metrik</Link>
+            <AccountControl />
           </nav>
         </header>
 

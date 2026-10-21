@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "sdk_version": "3.1.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://nkfgkkggivlqhloohyln.supabase.co/auth/v1",
+    "require_oauth_client_claim": true,
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "product-plan-playhouse",
+      "version": "0.1.0",
+      "title": "Product Plan Playhouse"
+    },
+    "tools": [
+      {
+        "name": "list_sample_places",
+        "title": "Lihat tempat contoh",
+        "description": "List KemanaAja's sample places, optionally filtered by area or category; excludes device-local CSV imports.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "area": {
+              "description": "Optional area from the supported area list.",
+              "type": "string",
+              "enum": [
+                "Jakarta Selatan",
+                "Jakarta Pusat",
+                "Jakarta Barat",
+                "Tangerang Selatan",
+                "Depok",
+                "Bandung"
+              ]
+            },
+            "category": {
+              "description": "Optional activity category.",
+              "type": "string",
+              "enum": [
+                "Kopi",
+                "Makan",
+                "Aktivitas",
+                "Outdoor",
+                "Hiburan"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "recommend_sample_places",
+        "title": "Rekomendasikan tempat kumpul",
+        "description": "Recommend up to five sample places from supplied group preferences, without reading or saving any rencana or individual budget.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "preferences": {
+              "minItems": 3,
+              "maxItems": 100,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "budget": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 200000,
+                    "multipleOf": 5000,
+                    "description": "Maximum budget per person in rupiah, matching the app slider."
+                  },
+                  "area": {
+                    "type": "string",
+                    "enum": [
+                      "Jakarta Selatan",
+                      "Jakarta Pusat",
+                      "Jakarta Barat",
+                      "Tangerang Selatan",
+                      "Depok",
+                      "Bandung"
+                    ],
+                    "description": "Nearest area."
+                  },
+                  "times": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "Siang",
+                        "Sore",
+                        "Malam"
+                      ]
+                    },
+                    "description": "Selected available time slots."
+                  },
+                  "cats": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "Kopi",
+                        "Makan",
+                        "Aktivitas",
+                        "Outdoor",
+                        "Hiburan"
+                      ]
+                    },
+                    "description": "Selected activity categories; may be empty."
+                  }
+                },
+                "required": [
+                  "budget",
+                  "area",
+                  "times",
+                  "cats"
+                ]
+              },
+              "description": "At least three group members' preferences; no names or identifiers required."
+            }
+          },
+          "required": [
+            "preferences"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
