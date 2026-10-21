@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { recommend, MIN_MEMBERS, SAMPLE_PLACES, fmtDate, type Member } from "./kemana";
+import { recommend, topVoted, votingOpen, VOTE_LIMITS, MIN_MEMBERS, SAMPLE_PLACES, fmtDate, type Member } from "./kemana";
 
 const m = (id: string, budget: number, area: string, times: string[], cats: string[] = []): Member => ({ id, name: id, budget, area, times, cats });
 
