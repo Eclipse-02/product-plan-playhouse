@@ -156,7 +156,7 @@ export async function saveRoom(r: Room) {
 export async function startVoting(id: string, ownerToken: string, endsAt: number | null) {
   const { error } = await supabase.rpc("start_voting", {
     _room_id: id, _owner_token: ownerToken,
-    _ends_at: endsAt === null ? null : new Date(endsAt).toISOString(),
+    _ends_at: (endsAt === null ? null : new Date(endsAt).toISOString()) as string,
   });
   if (error) throw error;
 }
