@@ -21,7 +21,10 @@ const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : "�
 function Metrik() {
   const [ev, setEv] = useState<KEvent[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
-  useEffect(() => { setEv(getEvents()); setRooms(allRooms()); }, []);
+  useEffect(() => {
+    getEvents().then(setEv).catch(() => undefined);
+    allRooms().then(setRooms).catch(() => undefined);
+  }, []);
 
   const created = ev.filter((e) => e.name === "room_created");
   const decidedRooms = new Set(ev.filter((e) => e.name === "decision_locked").map((e) => e.room));
@@ -35,7 +38,7 @@ function Metrik() {
   const counts = ["room_created", "preference_saved", "recommendations_viewed", "vote_cast", "decision_locked"].map((n) => [n, ev.filter((e) => e.name === n).length] as const);
 
   const cards = [
-    ["Room → Decision Card", pct(created.filter((c) => decidedRooms.has(c.room)).length, created.length), `${created.length} room dibuat`],
+    ["Rencana → Decision Card", pct(created.filter((c) => decidedRooms.has(c.room)).length, created.length), `${created.length} rencana dibuat`],
     ["Time-to-decision (median)", median === null ? "–" : `${median.toFixed(1)} menit`, `${durations.length} keputusan`],
     ["Anggota yang ikut voting", pct(voters, members), `${members} anggota mengisi preferensi`],
   ];
@@ -45,7 +48,7 @@ function Metrik() {
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
         <Link to="/" className="font-display text-xl font-bold">Kemana<span className="text-primary">Aja</span></Link>
         <h1 className="mt-6 font-display text-3xl font-bold">Metrik</h1>
-        <p className="text-sm text-muted-foreground">Data dari perangkat ini saja (prototipe).</p>
+        <p className="text-sm text-muted-foreground">Data tersimpan online — gabungan semua perangkat.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
           {cards.map(([t, v, s]) => (
             <div key={t} className="kz-card"><p className="text-sm font-semibold">{t}</p><p className="mt-2 font-display text-3xl font-bold">{v}</p><p className="text-xs text-muted-foreground">{s}</p></div>
@@ -58,7 +61,7 @@ function Metrik() {
         <div className="kz-card mt-4 overflow-x-auto">
           <h2 className="font-semibold">Log terbaru</h2>
           <ul className="mt-2 space-y-1 text-sm">{ev.slice(-20).reverse().map((e, i) => (
-            <li key={i}><code>{e.name}</code> · room {e.room} · {new Date(e.at).toLocaleString("id-ID")}</li>))}</ul>
+            <li key={i}><code>{e.name}</code> · rencana {e.room} · {new Date(e.at).toLocaleString("id-ID")}</li>))}</ul>
         </div>
       </div>
     </main>
