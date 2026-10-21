@@ -15,3 +15,6 @@
 - User-facing copy says "rencana", never "room"; code identifiers keep using "room".
 - The recommendation engine (`recommend` in src/lib/kemana.ts) stays pure and client-side so it is unit-testable; voting rule helpers (`votingOpen`, `topVoted`, `VOTE_LIMITS`) live there too.
 - Places data and CSV import stay per-device (localStorage); only rooms and metric events are online.
+- Remote MCP uses Supabase OAuth with a client-claim check and exposes only sample-place planning, never saved room JSON or device owner tokens, because room ownership is device-based rather than account-based.
+- Browser tools live in their owning screen and reuse visible-view guards; all executions use the fail-open WebMCP telemetry helper without recording arguments or results.
+- Integration login stores no extra profiles and preserves a canonical local return path through password, signup, and managed social callback flows; existing room access remains unchanged.
