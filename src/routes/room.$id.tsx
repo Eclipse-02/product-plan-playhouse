@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useWebMCP } from "use-webmcp-tool";
+import { runWebMCPTool } from "@/lib/webmcp-telemetry";
 import {
   AREAS, CATS, MIN_MEMBERS, SLOTS, TIMES, VOTE_LIMITS,
   fmtDate, getOwnerToken, loadRoom, lockDecision, recommend, reopenDecision, rupiah, saveRoom, startVoting, tally, topVoted, track, uid, votingOpen,
@@ -40,10 +42,44 @@ function RoomPage() {
   const update = (r: Room) => { setRoom({ ...r }); void saveRoom(r); };
   const ready = (room?.members.length ?? 0) >= MIN_MEMBERS;
   const go = (i: number) => {
+    if (!Number.isInteger(i) || i < 0 || i > 2) throw new Error("Pilih tampilan preferensi, rekomendasi, atau voting.");
+    if (!room || room.decided) throw new Error("Tampilan rencana belum tersedia atau keputusan sudah dikunci.");
     if (i > 0 && !ready) return;
     if (i === 1 && room) track("recommendations_viewed", room.id);
     setTab(i);
   };
+
+  useWebMCP({
+    name: "read_rencana_view",
+    description: "Read a compact summary of the current rencana screen, without member budgets or individual votes.",
+    annotations: { readOnlyHint: true, untrustedContentHint: true },
+    execute: () => runWebMCPTool("read_rencana_view", () => {
+      if (room === undefined) return "Rencana sedang dimuat.";
+      if (!room) throw new Error("Rencana tidak ditemukan.");
+      const summary = `${room.title} · ${fmtDate(room.date) || "Tanggal belum ditentukan"} · ${room.members.length} anggota`;
+      if (room.decided) {
+        const result = recommend(room.members).find(p => p.id === room.decided);
+        return `${summary}\nKeputusan: ${result?.name ?? "Tempat tidak tersedia"}`;
+      }
+      if (tab === 1) return `${summary}\n${recommend(room.members).map(p => `${p.id}: ${p.name} · ${p.area} · ${rupiah(p.price)}`).join("\n") || "Belum ada tempat cocok."}`;
+      if (tab === 2) return `${summary}\n${Object.keys(room.votes).length} dari ${room.members.length} anggota sudah voting. ${votingOpen(room) ? "Voting berlangsung." : "Voting belum dimulai atau sudah ditutup."}`;
+      return `${summary}\nTampilan preferensi anggota.`;
+    }),
+  });
+  useWebMCP<{ view: string }>({
+    name: "open_rencana_view",
+    description: "Open a visible rencana tab; recommendations and voting require at least three members.",
+    enabled: !!room && !room.decided,
+    inputSchema: { type: "object", properties: { view: { type: "string", enum: ["preferences", "recommendations", "voting"], description: "The rencana tab to open." } }, required: ["view"], additionalProperties: false },
+    execute: ({ view }) => runWebMCPTool("open_rencana_view", () => {
+      const choices = ["preferences", "recommendations", "voting"];
+      if (typeof view !== "string" || !choices.includes(view)) throw new Error("Tampilan tidak dikenal.");
+      const index = choices.indexOf(view);
+      if (index > 0 && !ready) throw new Error("Butuh minimal 3 anggota sebelum membuka tampilan ini.");
+      go(index);
+      return "Tampilan rencana diperbarui.";
+    }),
+  });
 
   if (room === undefined) return null;
   if (!room) return (
