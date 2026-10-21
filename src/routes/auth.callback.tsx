@@ -6,7 +6,7 @@ import { pageMeta } from "@/lib/page-meta";
 
 export const Route = createFileRoute("/auth/callback")({
   ssr: false,
-  validateSearch: (s: Record<string, unknown>) => ({ next: typeof s.next === "string" ? oauthReturnPath(s.next) : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({ next: typeof s['next'] === "string" ? oauthReturnPath(s['next']) : undefined }),
   head: () => pageMeta("Menyelesaikan masuk — KemanaAja", "Kembali ke persetujuan koneksi KemanaAja setelah masuk."),
   component: Callback,
 });

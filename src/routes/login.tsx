@@ -9,7 +9,7 @@ import { pageMeta } from "@/lib/page-meta";
 
 export const Route = createFileRoute("/login")({
   ssr: false,
-  validateSearch: (s: Record<string, unknown>) => ({ next: oauthReturnPath(s.next) }),
+  validateSearch: (s: Record<string, unknown>) => ({ next: oauthReturnPath(s['next']) }),
   beforeLoad: async ({ search }) => {
     const { data } = await supabase.auth.getUser();
     if (data.user) throw redirect({ href: search.next });

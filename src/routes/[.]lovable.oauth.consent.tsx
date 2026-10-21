@@ -7,7 +7,7 @@ import { pageMeta } from "@/lib/page-meta";
 
 export const Route = createFileRoute("/.lovable/oauth/consent")({
   ssr: false,
-  validateSearch: (s: Record<string, unknown>) => ({ authorization_id: typeof s.authorization_id === "string" ? s.authorization_id : "" }),
+  validateSearch: (s: Record<string, unknown>) => ({ authorization_id: typeof s['authorization_id'] === "string" ? s['authorization_id'] : "" }),
   beforeLoad: async ({ search, location }) => {
     if (!search.authorization_id) throw new Error("Tautan persetujuan tidak lengkap. Mulai koneksi lagi dari aplikasi agen.");
     const { data, error } = await supabase.auth.getUser();
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/.lovable/oauth/consent")({
   },
   head: () => pageMeta("Persetujuan koneksi agen — KemanaAja", "Tinjau dan setujui akses agen ke alat perencanaan KemanaAja."),
   pendingComponent: () => <main className="min-h-screen bg-background p-10 text-center">Memuat permintaan koneksi…</main>,
-  errorComponent: ({ error }) => <main className="min-h-screen bg-background px-5 py-16"><div className="mx-auto max-w-md"><h1 className="font-display text-2xl font-bold">Koneksi belum dapat dilanjutkan</h1><p role="alert" className="mt-4 text-muted-foreground">{error.message}</p><Link className="mt-6 inline-block underline" to="/">Kembali ke KemanaAja</Link></div></main>,
+  errorComponent: ({ error }) => <main className="min-h-screen bg-background px-5 py-16"><div className="mx-auto max-w-md"><h1 className="font-display text-2xl font-bold">Koneksi belum dapat dilanjutkan</h1><p role="alert" className="mt-4 text-muted-foreground">{error instanceof Error ? error.message : "Permintaan koneksi tidak tersedia. Coba lagi."}</p><Link className="mt-6 inline-block underline" to="/">Kembali ke KemanaAja</Link></div></main>,
   component: Consent,
 });
 
