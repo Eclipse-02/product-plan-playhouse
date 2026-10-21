@@ -14,13 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      events: {
+        Row: {
+          at: string
+          id: number
+          name: string
+          room: string
+        }
+        Insert: {
+          at?: string
+          id?: never
+          name: string
+          room: string
+        }
+        Update: {
+          at?: string
+          id?: never
+          name?: string
+          room?: string
+        }
+        Relationships: []
+      }
+      room_owners: {
+        Row: {
+          owner_token: string
+          room_id: string
+        }
+        Insert: {
+          owner_token: string
+          room_id: string
+        }
+        Update: {
+          owner_token?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_owners_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: true
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          created_at: string
+          date: string
+          decided: string | null
+          id: string
+          members: Json
+          title: string
+          votes: Json
+          voting_ends_at: string | null
+          voting_started_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          decided?: string | null
+          id: string
+          members?: Json
+          title: string
+          votes?: Json
+          voting_ends_at?: string | null
+          voting_started_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          decided?: string | null
+          id?: string
+          members?: Json
+          title?: string
+          votes?: Json
+          voting_ends_at?: string | null
+          voting_started_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_room: {
+        Args: {
+          _date: string
+          _id: string
+          _owner_token: string
+          _title: string
+        }
+        Returns: undefined
+      }
+      is_room_owner: {
+        Args: { _owner_token: string; _room_id: string }
+        Returns: boolean
+      }
+      lock_decision: {
+        Args: { _owner_token: string; _place_id: string; _room_id: string }
+        Returns: undefined
+      }
+      reopen_decision: {
+        Args: { _owner_token: string; _room_id: string }
+        Returns: undefined
+      }
+      start_voting: {
+        Args: { _ends_at: string; _owner_token: string; _room_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
