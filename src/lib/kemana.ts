@@ -1,5 +1,14 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export type Member = { id: string; name: string; budget: number; area: string; times: string[]; cats: string[] };
-export type Room = { id: string; title: string; date: string; createdAt?: number; members: Member[]; votes: Record<string, string>; decided?: string | undefined };
+export type Room = {
+  id: string; title: string; date: string; createdAt?: number; members: Member[]; votes: Record<string, string>;
+  decided?: string | undefined;
+  /** Epoch ms when the owner started voting; undefined = voting not started. */
+  votingStartedAt?: number | undefined;
+  /** Epoch ms deadline; null/undefined = no time limit. */
+  votingEndsAt?: number | null | undefined;
+};
 export type Place = { id: string; name: string; cat: string; area: string; price: number; open: number; close: number; note: string; maps: string; emoji: string };
 export type Rec = Place & { score: number; catMatch: number; areaMatch: number; time: string };
 
@@ -74,33 +83,99 @@ export function tally(votes: Record<string, string>) {
   return t;
 }
 
+/* ---------- voting rules ---------- */
+/** Voting is open when started, not locked, and the deadline (if any) hasn't passed. */
+export function votingOpen(room: Pick<Room, "votingStartedAt" | "votingEndsAt" | "decided">, now = Date.now()) {
+  return !!room.votingStartedAt && !room.decided && (!room.votingEndsAt || now < room.votingEndsAt);
+}
+/** Place ids with the highest vote count. Length > 1 means a tie the owner must break. */
+export function topVoted(votes: Record<string, string>): string[] {
+  const t = tally(votes);
+  const max = Math.max(0, ...Object.values(t));
+  return max === 0 ? [] : Object.keys(t).filter((id) => t[id] === max);
+}
+/** Voting time-limit options in minutes; null = no limit. */
+export const VOTE_LIMITS: { label: string; minutes: number | null }[] = [
+  { label: "15 menit", minutes: 15 },
+  { label: "1 jam", minutes: 60 },
+  { label: "24 jam", minutes: 24 * 60 },
+  { label: "Tanpa batas", minutes: null },
+];
+
 export const rupiah = (n: number) => (n === 0 ? "Gratis" : "Rp" + n.toLocaleString("id-ID"));
 export const uid = () => Math.random().toString(36).slice(2, 8);
 export const fmtDate = (iso: string) =>
   iso ? new Date(iso + "T00:00:00").toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short", year: "numeric" }).replace(/\./g, "") : "";
 
-/* ---------- storage (prototype: this device only) ---------- */
-const key = (id: string) => `kemana-room-${id}`;
-export function loadRoom(id: string): Room | null {
-  if (typeof window === "undefined") return null;
-  const raw = localStorage.getItem(key(id));
-  if (!raw) return null;
-  const r = JSON.parse(raw) as Room;
-  r.members = r.members.map((m) => {
-    const old = m as Member & { time?: string };
-    return { ...m, times: old.times ?? (old.time ? [old.time] : []) };
-  });
-  return r;
-}
-export function saveRoom(r: Room) {
-  localStorage.setItem(key(r.id), JSON.stringify(r));
-}
-export function allRooms(): Room[] {
-  if (typeof window === "undefined") return [];
-  return Object.keys(localStorage).filter((k) => k.startsWith("kemana-room-")).map((k) => loadRoom(k.slice(12))!).filter(Boolean);
+/* ---------- rooms: stored online (Lovable Cloud), synced across devices ---------- */
+type RoomRow = {
+  id: string; title: string; date: string; members: unknown; votes: unknown; decided: string | null;
+  voting_started_at: string | null; voting_ends_at: string | null; created_at: string;
+};
+
+function fromRow(r: RoomRow): Room {
+  const members = (r.members as (Member & { time?: string })[]).map((m) => ({
+    ...m, times: m.times ?? (m.time ? [m.time] : []),
+  }));
+  return {
+    id: r.id, title: r.title, date: r.date, members,
+    votes: (r.votes as Record<string, string>) ?? {},
+    decided: r.decided ?? undefined,
+    votingStartedAt: r.voting_started_at ? Date.parse(r.voting_started_at) : undefined,
+    votingEndsAt: r.voting_ends_at ? Date.parse(r.voting_ends_at) : null,
+    createdAt: Date.parse(r.created_at),
+  };
 }
 
-/* ---------- places + CSV import ---------- */
+/** Create a room online. Returns the owner token — kept on the creator's device only. */
+export async function createRoom(title: string, date: string): Promise<{ id: string; ownerToken: string }> {
+  const id = uid();
+  const ownerToken = uid() + uid();
+  const { error } = await supabase.rpc("create_room", { _id: id, _title: title, _date: date, _owner_token: ownerToken });
+  if (error) throw error;
+  localStorage.setItem(ownerKey(id), ownerToken);
+  return { id, ownerToken };
+}
+
+const ownerKey = (id: string) => `kemana-owner-${id}`;
+/** Owner token for this device, if this device created the room. */
+export const getOwnerToken = (id: string) => (typeof window === "undefined" ? null : localStorage.getItem(ownerKey(id)));
+
+export async function loadRoom(id: string): Promise<Room | null> {
+  const { data, error } = await supabase.from("rooms").select("*").eq("id", id).maybeSingle();
+  if (error) throw error;
+  return data ? fromRow(data as RoomRow) : null;
+}
+
+/** Save member/vote changes. Owner-gated fields go through the RPCs below. */
+export async function saveRoom(r: Room) {
+  const { error } = await supabase.from("rooms").update({ members: r.members, votes: r.votes }).eq("id", r.id);
+  if (error) throw error;
+}
+
+export async function startVoting(id: string, ownerToken: string, endsAt: number | null) {
+  const { error } = await supabase.rpc("start_voting", {
+    _room_id: id, _owner_token: ownerToken,
+    _ends_at: (endsAt === null ? null : new Date(endsAt).toISOString()) as string,
+  });
+  if (error) throw error;
+}
+export async function lockDecision(id: string, ownerToken: string, placeId: string) {
+  const { error } = await supabase.rpc("lock_decision", { _room_id: id, _owner_token: ownerToken, _place_id: placeId });
+  if (error) throw error;
+}
+export async function reopenDecision(id: string, ownerToken: string) {
+  const { error } = await supabase.rpc("reopen_decision", { _room_id: id, _owner_token: ownerToken });
+  if (error) throw error;
+}
+
+export async function allRooms(): Promise<Room[]> {
+  const { data, error } = await supabase.from("rooms").select("*").order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data as RoomRow[]).map(fromRow);
+}
+
+/* ---------- places + CSV import (per-device override) ---------- */
 export function getPlaces(): Place[] {
   if (typeof window === "undefined") return SAMPLE_PLACES;
   const raw = localStorage.getItem("kemana-places");
@@ -133,14 +208,14 @@ export function parsePlacesCsv(text: string): { places: Place[]; errors: string[
   return { places, errors };
 }
 
-/* ---------- metrics ---------- */
+/* ---------- metrics (online) ---------- */
 export type EventName = "room_created" | "preference_saved" | "recommendations_viewed" | "vote_cast" | "decision_locked";
 export type KEvent = { name: EventName; room: string; at: number };
 export function track(name: EventName, room: string) {
-  const all = getEvents(); all.push({ name, room, at: Date.now() });
-  localStorage.setItem("kemana-events", JSON.stringify(all));
+  void supabase.from("events").insert({ name, room }).then(() => undefined);
 }
-export function getEvents(): KEvent[] {
-  if (typeof window === "undefined") return [];
-  return JSON.parse(localStorage.getItem("kemana-events") ?? "[]") as KEvent[];
+export async function getEvents(): Promise<KEvent[]> {
+  const { data, error } = await supabase.from("events").select("name, room, at").order("at", { ascending: true });
+  if (error) throw error;
+  return (data as { name: EventName; room: string; at: string }[]).map((e) => ({ ...e, at: Date.parse(e.at) }));
 }

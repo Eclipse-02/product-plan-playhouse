@@ -1,12 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { fmtDate, saveRoom, track, uid } from "@/lib/kemana";
+import { createRoom, fmtDate, track } from "@/lib/kemana";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "KemanaAja — Putuskan tempat kumpul bareng, cepat" },
-      { name: "description", content: "Buat room, ajak teman, isi preferensi, dan voting tempat kumpul dalam < 10 menit." },
+      { name: "description", content: "Buat rencana, ajak teman, isi preferensi, dan voting tempat kumpul dalam < 10 menit." },
       { property: "og:title", content: "KemanaAja — Kumpul tanpa ribet" },
       { property: "og:description", content: "Keputusan kolektif tempat & aktivitas untuk anak muda Indonesia." },
       { property: "og:type", content: "website" },
@@ -22,12 +22,17 @@ function Index() {
   const nav = useNavigate();
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const create = () => {
-    const id = uid();
-    saveRoom({ id, title: title || "Kumpul Weekend", date, createdAt: Date.now(), members: [], votes: {} });
-    track("room_created", id);
-    nav({ to: "/room/$id", params: { id } });
+  const create = async () => {
+    setBusy(true);
+    try {
+      const { id } = await createRoom(title || "Kumpul Weekend", date);
+      track("room_created", id);
+      nav({ to: "/room/$id", params: { id } });
+    } catch {
+      setBusy(false);
+    }
   };
 
   return (
@@ -62,13 +67,13 @@ function Index() {
           </div>
 
           <div className="rounded-3xl border-2 border-foreground bg-card p-6 shadow-brutal sm:p-7">
-            <h2 className="font-display text-2xl font-bold">Buat room baru</h2>
+            <h2 className="font-display text-2xl font-bold">Buat rencana baru</h2>
             <label htmlFor="t" className="mt-5 block text-sm font-semibold">Nama rencana</label>
             <input id="t" className="kz-input" placeholder="mis. Kumpul Weekend" value={title} onChange={(e) => setTitle(e.target.value)} />
-            <label htmlFor="d" className="mt-4 block text-sm font-semibold">Tanggal</label>
+            <label htmlFor="d" className="mt-4 block text-sm font-semibold">Tanggal (opsional)</label>
             <input id="d" type="date" className="kz-input" value={date} onChange={(e) => setDate(e.target.value)} />
             <p className="mt-1 text-xs text-muted-foreground">Boleh perkiraan{date && ` · ${fmtDate(date)}`}</p>
-            <button onClick={create} className="kz-btn mt-6 w-full">Buat Room →</button>
+            <button onClick={create} disabled={busy} className="kz-btn mt-6 w-full disabled:opacity-50">{busy ? "Membuat…" : "Buat Rencana →"}</button>
           </div>
         </section>
       </div>
