@@ -4,6 +4,7 @@
 
 KemanaAja is a group-planning web app prototype for young people in Indonesia. One person creates a plan and shares a link; everyone fills in their preferences privately; the app recommends 3–5 places that fit **everyone's** budget; the group votes and gets a shareable Decision Card.
 
+- **Supported Documents**: https://drive.google.com/drive/folders/1BTvnJ3Ftf5pWSQeN7ejdC_q4bq7M81Xu?usp=sharing
 - **Live prototype:** https://product-plan-playhouse.lovable.app
 - **E2E tests and QA findings:** [`e2e-testing` branch](https://github.com/Eclipse-02/product-plan-playhouse/tree/e2e-testing)
 
